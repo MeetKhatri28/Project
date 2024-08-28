@@ -1,0 +1,28 @@
+module RegisterFile (
+    input clk,
+    input [3:0] reg1,  // Destination Register
+    input [3:0] reg2,  // Source Register 1
+    input [3:0] reg3,  // Source Register 2
+    input [18:0] write_data,
+    input reg_write_enable,
+    output reg [18:0] read_data1,
+    output reg [18:0] read_data2
+);
+    reg [18:0] registers [15:0];  // 16 registers of 19 bits each
+
+    // Initialize register R0 to zero
+    initial begin
+        registers[0] = 19'b0;
+    end
+
+    always @(posedge clk) begin
+        if (reg_write_enable && reg1 != 4'b0000) begin
+            registers[reg1] <= write_data;
+        end
+    end
+
+    always @(*) begin
+        read_data1 = registers[reg2];
+        read_data2 = registers[reg3];
+    end
+endmodule

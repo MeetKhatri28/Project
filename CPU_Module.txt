@@ -1,0 +1,64 @@
+module CPU (
+    input clk,
+    input reset,
+    output [18:0] PC
+);
+    reg [18:0] pc;
+    wire [5:0] opcode;
+    wire [3:0] reg1, reg2, reg3;
+    wire [4:0] imm_offset;
+    wire [18:0] alu_out;
+    wire zero_flag;
+    reg [18:0] instr;
+    wire [18:0] read_data1, read_data2;
+    reg reg_write_enable;
+    wire [18:0] write_data;
+
+    // Instruction Fetch (IF) Stage
+    always @(posedge clk or posedge reset) begin
+        if (reset)
+            pc <= 0;
+        else
+            pc <= pc + 1;
+    end
+
+    // Instruction Decode (ID) Stage
+    assign opcode = instr[18:13];
+    assign reg1 = instr[12:9];
+    assign reg2 = instr[8:5];
+    assign reg3 = instr[4:1];
+    assign imm_offset = instr[4:0];
+
+    RegisterFile regfile (
+        .clk(clk),
+        .reg1(reg1),
+        .reg2(reg2),
+        .reg3(reg3),
+        .write_data(write_data),
+        .reg_write_enable(reg_write_enable),
+        .read_data1(read_data1),
+        .read_data2(read_data2)
+    );
+
+    // Execute (EX) Stage
+    ALU alu (
+        .opcode(opcode),
+        .in1(read_data1),
+        .in2(read_data2),
+        .out(alu_out),
+        .zero(zero_flag)
+    );
+
+    // Memory Access / Write Back (MEM/WB) Stage
+    always @(posedge clk) begin
+        case (opcode)
+            6'b000000: reg_write_enable <= 1;  // Example for ADD
+            6'b000001: reg_write_enable <= 1;  // Example for SUB
+            // Add cases for other instructions as needed
+            default: reg_write_enable <= 0;
+        endcase
+        write_data <= alu_out;
+    end
+
+    assign PC = pc;
+endmodule
